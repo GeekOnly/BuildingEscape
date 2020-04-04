@@ -45,10 +45,4 @@ private:
 
 	//Called when grab is released
 	void Release();
-
-	//Return currrnt Start of reach line
-	FVector GetReachLineStart();
-
-	//Return currrnt end of reach line
-	FVector GetReachLineEnd();
 };

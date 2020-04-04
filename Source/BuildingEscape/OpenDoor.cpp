@@ -1,9 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "BuildingEscape.h"
-#include "OpenDoor.h"
 
-#define OUT
+#include "OpenDoor.h"
 
 // Sets default values for this component's properties
 UOpenDoor::UOpenDoor()
@@ -20,7 +18,12 @@ UOpenDoor::UOpenDoor()
 void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
+<<<<<<< HEAD
 	//ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
+=======
+
+	ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
+>>>>>>> parent of 00068ec... 89 Pointer
 	Owner = GetOwner();
 	if (!PressurePlate) 
 	{
@@ -46,10 +49,11 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	//Poll the Trigger Volume
-	if (GetTotalMassOfActorsOnPlate() > 50.f) //TODO make into a parameter
+	if (PressurePlate->IsOverlappingActor(ActorThatOpens))
 	{
 		OpenDoor();
 		LastDoorOpenTime = GetWorld()->GetTimeSeconds();
+		UE_LOG(LogTemp,Warning,TEXT("OpenDoor"));
 	}
 
 	if (GetWorld()->GetTimeSeconds() - LastDoorOpenTime > DoorCloseDelay) {
@@ -57,6 +61,7 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	}
 }
 
+<<<<<<< HEAD
 float UOpenDoor::GetTotalMassOfActorsOnPlate()
 {
 	float TotalMass = 0.f;
@@ -76,3 +81,5 @@ float UOpenDoor::GetTotalMassOfActorsOnPlate()
 	return TotalMass;
 }
 
+=======
+>>>>>>> parent of 00068ec... 89 Pointer
