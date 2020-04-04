@@ -24,7 +24,7 @@ void UGrabber::BeginPlay()
 	//UE_LOG(LogTemp, Warning, TEXT("Grabber Position Rapper"));
 
 	SetupInputComponent();
-		FindPhysicHandleComponent();
+	FindPhysicHandleComponent();
 	
 }
 
@@ -59,7 +59,65 @@ void UGrabber::FindPhysicHandleComponent()
 
 const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 {
+	//Line-trace (AKA ray-cast) out to reach distance
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner());
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT HitResult,
+		GetReachLineStart(),
+		GetReachLineEnd(),
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
+		TraceParameters
+		);
+	return HitResult;
+}
 
+
+
+// Called every frame
+void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (!PhysicsHandle) { return; }
+		//if the physics handle is attached
+	if (PhysicsHandle->GrabbedComponent)
+	{
+		//Move the object that we're holding
+		PhysicsHandle->SetTargetLocation(GetReachLineEnd());
+	}
+}
+
+void UGrabber::Grab()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Grab Pressed!!"));
+
+	//LINE TRACE and see if we reach any actors with physics body collision channel set
+	 auto HitResult = GetFirstPhysicsBodyInReach();
+	 auto ComponentToGrab = HitResult.GetComponent();
+	 auto ActorHit = HitResult.GetActor();
+
+	//If we hit something then attach a physics handle
+	 if (ActorHit) 
+	 {
+		 if (!PhysicsHandle) { return; }
+		 //TODO attach physics handle
+		 PhysicsHandle->GrabComponent(
+			 ComponentToGrab,
+			 NAME_None, 
+			 ComponentToGrab->GetOwner()->GetActorLocation(), 
+			 true);
+	 }
+}
+
+void UGrabber::Release()
+{
+	if (!PhysicsHandle) { return; }
+	PhysicsHandle->ReleaseComponent();
+}
+
+FVector UGrabber::GetReachLineStart() 
+{
 	//Get player view point this tick
 	FVector PlayerViewPointLocation;
 	FRotator PlayerViewPointRotation;
@@ -71,54 +129,20 @@ const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 	//Todo log out to test
 	//UE_LOG(LogTemp, Warning, TEXT("Location: %s. Position: %s"),*PlayerViewPointLocation.ToString(),*PlayerViewPointRotation.ToString());
 
-	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
-
-	//DrawDebugLine(GetWorld(),PlayerViewPointLocation,LineTraceEnd,FColor(255, 0, 0),false,0.f,0.f,10.f);
-
-	//Setup query parameters
-	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner());
-
-	//Line-trace (AKA ray-cast) out to reach distance
-	FHitResult Hit;
-	GetWorld()->LineTraceSingleByObjectType(
-		OUT Hit,
-		PlayerViewPointLocation,
-		LineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
-		TraceParameters
+	return PlayerViewPointLocation + PlayerViewPointRotation.Vector();
+}
+FVector UGrabber::GetReachLineEnd()
+{
+	//Get player view point this tick
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PlayerViewPointLocation,
+		OUT PlayerViewPointRotation
 		);
 
-	//See what what we hit
-	AActor* ActorHit = Hit.GetActor();
-	if (ActorHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Line trace hit: %s"), *(ActorHit->GetName()));
-	}
-	return FHitResult();
+	//Todo log out to test
+	//UE_LOG(LogTemp, Warning, TEXT("Location: %s. Position: %s"),*PlayerViewPointLocation.ToString(),*PlayerViewPointRotation.ToString());
+
+	return PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
 }
-
-
-
-// Called every frame
-void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
-void UGrabber::Grab()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Grab Pressed!!"));
-
-	//LINE TRACE and see if we reach any actors with physics body collision channel set
-	GetFirstPhysicsBodyInReach();
-
-	//If we hit something then attach a physics handle
-	//TODO attach physics handle
-}
-
-void UGrabber::Release()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Grab Released!!"));
-	//TODO release physics handle
-}
-
